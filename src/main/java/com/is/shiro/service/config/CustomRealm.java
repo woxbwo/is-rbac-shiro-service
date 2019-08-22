@@ -35,7 +35,7 @@ public class CustomRealm extends AuthorizingRealm {
      */
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
-        System.out.println("/t/t/t/t授权 doGetAuthorizationInfo");
+        System.out.println("授权 doGetAuthorizationInfo");
         String userName = (String) principalCollection.getPrimaryPrincipal();
         User user = userService.findAllUserInfoByUsername(userName);
         List<String> roleList = new ArrayList<>();
@@ -63,7 +63,7 @@ public class CustomRealm extends AuthorizingRealm {
      */
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) throws AuthenticationException {
-        System.out.println("/t/t/t/t登录认证 doGetAuthenticationInfo");
+        System.out.println("登录认证 doGetAuthenticationInfo");
         String userName = (String) authenticationToken.getPrincipal();
         User user = userService.findAllUserInfoByUsername(userName);
         String pwd = user.getPassword();

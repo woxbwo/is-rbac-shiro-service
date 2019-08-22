@@ -5,6 +5,7 @@ import org.apache.shiro.mgt.DefaultSecurityManager;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
+import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -21,49 +22,74 @@ import java.util.Map;
 public class ShiroConfig {
     @Bean
     public ShiroFilterFactoryBean shiroFilter(SecurityManager securityManager){
+
         System.out.println("执行 ShiroFilterFactoryBean.shiroFilter()");
+
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
-        //必须设置
+
+        //必须设置securityManager
         shiroFilterFactoryBean.setSecurityManager(securityManager);
-        //需要登录的接口，如果访问某个接口，却没登录
+
+
+        //需要登录的接口，如果访问某个接口，需要登录却没登录，则调用此接口(如果不是前后端分离，则跳转页面)
         shiroFilterFactoryBean.setLoginUrl("/pub/need_login");
-        //登录成功跳转的url
+
+        //登录成功，跳转url，如果前后端分离，则没这个调用
         shiroFilterFactoryBean.setSuccessUrl("/");
 
-        //没权限。未授权调用接口就会跳到此接口 ，先登录-》验证是否有权限
+        //没有权限，未授权就会调用此方法， 先验证登录-》再验证是否有权限
+        shiroFilterFactoryBean.setUnauthorizedUrl("/pub/not_permit");
 
-        shiroFilterFactoryBean.setUnauthorizedUrl("/pub/not_permission");
 
-        /**
-         * 1.必须使用LinkedHashMap
-         * 2.按照顺序执行 /** 必须放在最下边
-         */
-        Map<String,String> filterChainMap = new LinkedHashMap<>();
+        //拦截器路径，坑一，部分路径无法进行拦截，时有时无；因为同学使用的是hashmap, 无序的，应该改为LinkedHashMap
+        Map<String, String> filterChainDefinitionMap = new LinkedHashMap<>();
+
         //退出过滤器
-        filterChainMap.put("/logout","logout");
-        //匿名能访问的，也就是游客可以访问的
-        filterChainMap.put("/pub/**","anon");
-        //登录才可以操作的
-        filterChainMap.put("/user/**","authc");
-        //管理员角色才可以访问的
-        filterChainMap.put("/admin/***","roles[admin]");
-        //有编辑权限才可以访问的
-        filterChainMap.put("/video/update","perms[video_update]");
-        //authc : url用户必须通过认证才能访问
-        //anno  : url可以匿名访问
-        filterChainMap.put("/**","authc");
-        shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainMap);
+        filterChainDefinitionMap.put("/logout","logout");
+
+        //匿名可以访问，也是就游客模式
+        filterChainDefinitionMap.put("/pub/**","anon");
+
+        //登录用户才可以访问
+        filterChainDefinitionMap.put("/authc/**","authc");
+
+        //管理员角色才可以访问
+        filterChainDefinitionMap.put("/admin/**","roles[admin]");
+
+        //有编辑权限才可以访问
+        filterChainDefinitionMap.put("/video/update","perms[video_update]");
+
+
+        //坑二: 过滤链是顺序执行，从上而下，一般讲/** 放到最下面
+
+        //authc : url定义必须通过认证才可以访问
+        //anon  : url可以匿名访问
+        filterChainDefinitionMap.put("/**", "authc");
+
+        shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMap);
+
         return shiroFilterFactoryBean;
     }
+
+
     @Bean
     public SecurityManager securityManager(){
-        DefaultSecurityManager securityManager = new DefaultSecurityManager();
+        DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
 
+        //如果不是前后端分离，则不必设置下面的sessionManager
         securityManager.setSessionManager(sessionManager());
-        //设置realm，推荐放在最后
+
+        //设置realm（推荐放到最后，不然某些情况会不生效）
         securityManager.setRealm(customRealm());
+
         return securityManager;
     }
+
+
+    /**
+     * 自定义realm
+     * @return
+     */
     @Bean
     public CustomRealm customRealm(){
         CustomRealm customRealm = new CustomRealm();
@@ -71,21 +97,35 @@ public class ShiroConfig {
         return customRealm;
     }
 
-    @Bean
-    public SessionManager sessionManager(){
-        CustomSessionManager customSessionManager = new CustomSessionManager();
-        //会话超时时间30分钟
-        customSessionManager.setGlobalSessionTimeout(20000);
-        return customSessionManager;
-    }
 
+    /**
+     * 密码加解密规则
+     * @return
+     */
     @Bean
     public HashedCredentialsMatcher hashedCredentialsMatcher(){
-        HashedCredentialsMatcher hashedCredentialsMatcher = new HashedCredentialsMatcher();
-        //设置三列算法
-        hashedCredentialsMatcher.setHashAlgorithmName("sha256");
-        //设置散列算法次数
-        hashedCredentialsMatcher.setHashIterations(2);
-        return hashedCredentialsMatcher;
+        HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher();
+
+        //设置散列算法：这里使用的MD5算法
+        credentialsMatcher.setHashAlgorithmName("md5");
+
+        //散列次数，好比散列2次，相当于md5(md5(xxxx))
+        credentialsMatcher.setHashIterations(2);
+
+        return credentialsMatcher;
+    }
+
+
+
+    //自定义sessionManager
+    @Bean
+    public SessionManager sessionManager(){
+
+        CustomSessionManager customSessionManager = new CustomSessionManager();
+
+        //超时时间，默认 30分钟，会话超时；方法里面的单位是毫秒
+        //customSessionManager.setGlobalSessionTimeout(20000);
+
+        return customSessionManager;
     }
 }
