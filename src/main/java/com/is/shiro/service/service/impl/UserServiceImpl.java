@@ -26,6 +26,9 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public User findAllUserInfoByUsername(String username) {
+        /**
+         *再也逻辑处理加缓存，或者在realm中加缓存
+         **/
         User user = userMapper.findByUsername(username);
         //用户的角色集合
         List<Role> roleList = roleMapper.findRoleListByUserId(user.getId());

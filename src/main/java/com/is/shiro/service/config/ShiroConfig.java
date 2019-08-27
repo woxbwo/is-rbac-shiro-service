@@ -6,9 +6,12 @@ import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.crazycake.shiro.RedisCacheManager;
+import org.crazycake.shiro.RedisManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.servlet.Filter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -40,6 +43,11 @@ public class ShiroConfig {
         //没有权限，未授权就会调用此方法， 先验证登录-》再验证是否有权限
         shiroFilterFactoryBean.setUnauthorizedUrl("/pub/not_permit");
 
+        //设置自定义filter
+        Map<String, Filter> filterMap = new LinkedHashMap<>();
+        filterMap.put("roleOrFilter",new CustomRolesOrAuthorizationFilter());
+        shiroFilterFactoryBean.setFilters(filterMap);
+
 
         //拦截器路径，坑一，部分路径无法进行拦截，时有时无；因为同学使用的是hashmap, 无序的，应该改为LinkedHashMap
         Map<String, String> filterChainDefinitionMap = new LinkedHashMap<>();
@@ -54,7 +62,7 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/authc/**","authc");
 
         //管理员角色才可以访问
-        filterChainDefinitionMap.put("/admin/**","roles[admin]");
+        filterChainDefinitionMap.put("/admin/**","roleOrFilter[admin,root]");
 
         //有编辑权限才可以访问
         filterChainDefinitionMap.put("/video/update","perms[video_update]");
@@ -78,10 +86,10 @@ public class ShiroConfig {
 
         //如果不是前后端分离，则不必设置下面的sessionManager
         securityManager.setSessionManager(sessionManager());
-
+        //配置RedisCacheManager
+        securityManager.setCacheManager(getRedisCacheManager());
         //设置realm（推荐放到最后，不然某些情况会不生效）
         securityManager.setRealm(customRealm());
-
         return securityManager;
     }
 
@@ -127,5 +135,33 @@ public class ShiroConfig {
         //customSessionManager.setGlobalSessionTimeout(20000);
 
         return customSessionManager;
+    }
+
+    /**
+     *@description:
+     * 配置RedisManager
+     *@params:
+     *@return:
+     **/
+    @Bean
+    public RedisManager getRedisManager(){
+        RedisManager redisManager = new RedisManager();
+        redisManager.setHost("127.0.0.1");
+        redisManager.setPort(6379);
+        return redisManager;
+    }
+    /**
+     *@description:
+     * 配置RedisCacheManager
+     *@params:  []
+     *@return:  org.crazycake.shiro.RedisCacheManager
+     **/
+    @Bean
+    public RedisCacheManager getRedisCacheManager(){
+        RedisCacheManager redisCacheManager = new RedisCacheManager();
+        redisCacheManager.setRedisManager(getRedisManager());
+        //设置过期时间,具体时间设置看业务需求git
+        redisCacheManager.setExpire(20);
+        return redisCacheManager;
     }
 }

@@ -36,8 +36,8 @@ public class CustomRealm extends AuthorizingRealm {
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principalCollection) {
         System.out.println("授权 doGetAuthorizationInfo");
-        String userName = (String) principalCollection.getPrimaryPrincipal();
-        User user = userService.findAllUserInfoByUsername(userName);
+        User newUser = (User) principalCollection.getPrimaryPrincipal();
+        User user = userService.findAllUserInfoByUsername(newUser.getUsername());
         List<String> roleList = new ArrayList<>();
         List<String> permissionList = new ArrayList<>();
         user.getRoleList().forEach(role -> {
@@ -70,6 +70,6 @@ public class CustomRealm extends AuthorizingRealm {
         if (StringUtils.isEmpty(pwd)) {
             throw new IllegalArgumentException("use pwd is null");
         }
-        return new SimpleAuthenticationInfo(userName, pwd, this.getClass().getName());
+        return new SimpleAuthenticationInfo(user, pwd, this.getClass().getName());
     }
 }
