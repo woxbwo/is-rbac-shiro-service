@@ -1,12 +1,14 @@
 package com.is.shiro.service.domain;
 
+import java.io.Serializable;
+
 /**
  * @ClassName: UserRole
  * @Description:
  * @Author: Coding_wxb
  * @Date 2019.08.07 1:56
  */
-public class UserRole {
+public class UserRole implements Serializable {
     private int id;
 
     private int userId;

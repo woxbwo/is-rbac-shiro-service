@@ -1,5 +1,7 @@
 package com.is.shiro.service.domain;
 
+import java.io.Serializable;
+
 /**
  * @ClassName: RolePermission
  * @Description:
@@ -7,7 +9,7 @@ package com.is.shiro.service.domain;
  * @Author: Coding_wxb
  * @Date 2019.08.07 1:57
  */
-public class RolePermission {
+public class RolePermission implements Serializable {
     private int id;
 
     private int roleId;

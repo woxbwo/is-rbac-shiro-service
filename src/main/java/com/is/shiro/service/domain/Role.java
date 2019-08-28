@@ -1,5 +1,6 @@
 package com.is.shiro.service.domain;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -8,7 +9,7 @@ import java.util.List;
  * @Author: Coding_wxb
  * @Date 2019.08.07 1:53
  */
-public class Role {
+public class Role implements Serializable {
     private int id;
 
     private String name;

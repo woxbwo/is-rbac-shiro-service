@@ -1,12 +1,14 @@
 package com.is.shiro.service.domain;
 
+import java.io.Serializable;
+
 /**
  * @ClassName: PermissionMapper
  * @Description:
  * @Author: Coding_wxb
  * @Date 2019.08.07 1:54
  */
-public class Permission {
+public class Permission implements Serializable {
     private int id;
 
     private String name;
